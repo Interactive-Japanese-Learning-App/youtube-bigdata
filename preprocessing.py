@@ -52,7 +52,7 @@ def prepare_data(video_df, stats_df):
 
     return df
 
-# Channel Berdasarkan Video
+# Channel 
 def prepare_channel_data(channel_df, stats_df):
 
     if channel_df.empty or stats_df.empty:
@@ -100,22 +100,3 @@ def prepare_channel_data(channel_df, stats_df):
     df["updated_at"] = datetime.now()
 
     return df.reset_index(drop=True)
-
-# Channel Top Berdasarkan YT
-def analyze_top_channels(df):
-
-    if df.empty:
-        return df
-
-    df["score"] = (
-        df["total_views"] * 0.6 +
-        df["subscribers"] * 0.3 +
-        df["total_videos"] * 0.1
-    )
-
-    top_channels = df.sort_values(
-        by="score",
-        ascending=False
-    )
-
-    return top_channels
