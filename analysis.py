@@ -58,3 +58,36 @@ def analyze(df):
     print(channel_df.head(10))
 
     return trending_df, channel_df
+
+
+def analyze_top_channels(df):
+
+    if df.empty:
+        print("Data channel kosong!")
+        return pd.DataFrame()
+
+    df["score"] = (
+        (df["total_views"] * 0.6) +
+        (df["subscribers"] * 0.3) +
+        (df["total_videos"] * 0.1)
+    )
+
+    top_channel_df = df.sort_values(
+        by="score",
+        ascending=False
+    ).reset_index(drop=True)
+
+    print("\nTOP CHANNEL YOUTUBE")
+    print(
+        top_channel_df[
+            [
+                "channel_name",
+                "subscribers",
+                "total_views",
+                "total_videos",
+                "score"
+            ]
+        ].head(10)
+    )
+
+    return top_channel_df

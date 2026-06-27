@@ -14,3 +14,4 @@ if not MONGO_URI:
 DATABASE_NAME = "bigdata_youtube"
 VIDEO_COLLECTION = "videos"
 CHANNEL_COLLECTION = "channels"
+TOP_CHANNEL_COLLECTION = "top_channels"
