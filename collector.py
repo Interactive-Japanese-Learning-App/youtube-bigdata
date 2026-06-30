@@ -2,15 +2,19 @@ import requests
 import pandas as pd
 from config import API_KEY
 
-# Video
+
+# COLLECT VIDEO
 def collect_data(max_results=20):
+
     search_query = (
         "belajar bahasa jepang "
         "hiragana katakana pemula "
         "bahasa indonesia "
         "indo"
     )
+
     url = "https://www.googleapis.com/youtube/v3/search"
+
     params = {
         "part": "snippet",
         "q": search_query,
@@ -22,28 +26,48 @@ def collect_data(max_results=20):
         "relevanceLanguage": "id",
         "key": API_KEY
     }
+
     response = requests.get(url, params=params)
     response.raise_for_status()
+
     data = response.json()
+
     videos = []
+
     for item in data.get("items", []):
+
         if "videoId" not in item["id"]:
             continue
+
+        video_id = item["id"]["videoId"]
+
         videos.append({
-            "video_id": item["id"]["videoId"],
+            "video_id": video_id,
             "title": item["snippet"]["title"],
             "channel": item["snippet"]["channelTitle"],
-            "published_at": item["snippet"]["publishedAt"]
+            "published_at": item["snippet"]["publishedAt"],
+            "thumbnail": item["snippet"]["thumbnails"]["high"]["url"],
+            "video_url": f"https://www.youtube.com/watch?v={video_id}"
         })
-    return pd.DataFrame(videos)
 
+    video_df = pd.DataFrame(videos)
 
+    print(
+        f"Berhasil mengambil {len(video_df)} video"
+    )
+
+    return video_df
+
+# COLLECT VIDEO STATISTICS
 def collect_statistics(video_df):
+
     if video_df.empty:
         return pd.DataFrame()
 
     video_ids = video_df["video_id"].tolist()
+
     url = "https://www.googleapis.com/youtube/v3/videos"
+
     params = {
         "part": "statistics",
         "id": ",".join(video_ids),
@@ -52,10 +76,13 @@ def collect_statistics(video_df):
 
     response = requests.get(url, params=params)
     response.raise_for_status()
+
     data = response.json()
+
     statistics = []
 
     for item in data.get("items", []):
+
         statistics.append({
             "video_id": item["id"],
             "views": int(
@@ -67,18 +94,26 @@ def collect_statistics(video_df):
             "comments": int(
                 item["statistics"].get("commentCount", 0)
             )
-
         })
-    return pd.DataFrame(statistics)
 
-# Channel
+    stats_df = pd.DataFrame(statistics)
+
+    print(
+        f"Berhasil mengambil statistik {len(stats_df)} video"
+    )
+
+    return stats_df
+
+
+# COLLECT TOP CHANNEL
 def collect_top_channels(max_results=10):
+
     search_query = (
         "belajar bahasa jepang indonesia"
     )
-    url = (
-        "https://www.googleapis.com/youtube/v3/search"
-    )
+
+    url = "https://www.googleapis.com/youtube/v3/search"
+
     params = {
         "part": "snippet",
         "q": search_query,
@@ -89,67 +124,73 @@ def collect_top_channels(max_results=10):
         "key": API_KEY
     }
 
-    response = requests.get(
-        url,
-        params=params
-    ).json()
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+
+    data = response.json()
+
     channels = []
-    for item in response.get("items", []):
+
+    for item in data.get("items", []):
+
+        channel_id = item["snippet"]["channelId"]
+
         channels.append({
-            "channel_id":
-            item["snippet"]["channelId"],
-
-            "channel_name":
-            item["snippet"]["title"],
-
-            "published_at":
-            item["snippet"]["publishedAt"]
-
+            "channel_id": channel_id,
+            "channel_name": item["snippet"]["title"],
+            "published_at": item["snippet"]["publishedAt"],
+            "thumbnail": item["snippet"]["thumbnails"]["high"]["url"],
+            "channel_url": f"https://www.youtube.com/channel/{channel_id}"
         })
 
     channel_df = pd.DataFrame(channels)
+
     print(
         f"Berhasil mengambil {len(channel_df)} channel"
     )
+
     return channel_df
 
+# COLLECT CHANNEL STATISTICS
 def collect_channel_statistics(channel_df):
-    url = (
-        "https://www.googleapis.com/youtube/v3/channels"
-    )
+
+    if channel_df.empty:
+        return pd.DataFrame()
+
+    channel_ids = channel_df["channel_id"].tolist()
+
+    url = "https://www.googleapis.com/youtube/v3/channels"
+
     params = {
         "part": "statistics",
-        "id": ",".join(
-            channel_df["channel_id"].tolist()
-        ),
+        "id": ",".join(channel_ids),
         "key": API_KEY
     }
 
-    response = requests.get(
-        url,
-        params=params
-    ).json()
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+
+    data = response.json()
+
     statistics = []
-    for item in response.get("items", []):
+
+    for item in data.get("items", []):
+
         statistics.append({
-            "channel_id":
-            item["id"],
-            "subscribers":
-            int(
+            "channel_id": item["id"],
+            "subscribers": int(
                 item["statistics"].get(
                     "subscriberCount",
                     0
                 )
             ),
-            "total_views":
-            int(
+            "total_views": int(
                 item["statistics"].get(
                     "viewCount",
                     0
                 )
             ),
-            "total_videos":
-            int(
+            "total_videos": int(
                 item["statistics"].get(
                     "videoCount",
                     0
@@ -158,7 +199,9 @@ def collect_channel_statistics(channel_df):
         })
 
     stats_df = pd.DataFrame(statistics)
+
     print(
         f"Berhasil mengambil statistik {len(stats_df)} channel"
     )
+
     return stats_df
